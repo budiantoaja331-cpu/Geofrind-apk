@@ -23,7 +23,7 @@ jobs:
           distribution: 'temurin'
 
       # --- 1. MEMASUKKAN FIREBASE JSON (TANPA BASE64) ---
-      - name: Inject Google Services JSON (Tanpa Base64)
+      - name: Inject Google Services JSON
         env:
           JSON_DATA: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
         run: |
@@ -38,10 +38,12 @@ jobs:
         run: |
           echo "GEMINI_API_KEY=$GEMINI_KEY" > local.properties
 
-      # --- 3. BUILD APK (MEMPERBAIKI ERROR ./gradlew) ---
+      # --- 3. BUILD APK (MEMAKSA UNDUH GRADLE 8.2 OTOMATIS) ---
+      # Ini menyelesaikan error "Cannot locate Gradle Wrapper"
       - name: Build Unsigned Release APK
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v3
         with:
+          gradle-version: '8.2' # Versi Gradle standar Android
           arguments: assembleRelease
 
       # --- 4. UPLOAD APK AGAR BISA DIDOWNLOAD ---
