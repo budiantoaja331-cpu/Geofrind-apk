@@ -16,13 +16,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # --- PERBAIKAN 1: KEMBALI KE JAVA 17 (Wajib untuk pustaka terbaru) ---
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      # --- 1. MEMASUKKAN FIREBASE JSON (TANPA BASE64) ---
+      # --- 2. MEMASUKKAN FIREBASE JSON ---
       - name: Inject Google Services JSON
         env:
           JSON_DATA: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -31,22 +32,24 @@ jobs:
           $JSON_DATA
           EOF
 
-      # --- 2. MEMASUKKAN GEMINI API KEY ---
+      # --- 3. MEMASUKKAN GEMINI API KEY ---
       - name: Inject API Keys to local.properties
         env:
           GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           echo "GEMINI_API_KEY=$GEMINI_KEY" > local.properties
 
-      # --- 3. BUILD APK (MEMAKSA UNDUH GRADLE 8.2 OTOMATIS) ---
-      # Ini menyelesaikan error "Cannot locate Gradle Wrapper"
+      # --- PERBAIKAN 2: GUNAKAN GRADLE 8.5 & BERSIHKAN CACHE ---
+      # Kita gunakan Gradle 8.5 yang lebih tahan banting terhadap error ekstrak JAR,
+      # dan kita tambahkan 'clean' serta '--no-configuration-cache' agar
+      # proses build benar-benar mengunduh ulang file yang korup.
       - name: Build Unsigned Release APK
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: '8.2' # Versi Gradle standar Android
-          arguments: assembleRelease
+          gradle-version: '8.5'
+          arguments: clean assembleRelease --no-daemon --no-configuration-cache
 
-      # --- 4. UPLOAD APK AGAR BISA DIDOWNLOAD ---
+      # --- 5. UPLOAD APK KE HALAMAN GITHUB ACTIONS ---
       - name: Upload APK Release
         uses: actions/upload-artifact@v4
         with:
